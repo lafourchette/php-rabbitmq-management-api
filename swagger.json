@@ -1,0 +1,1032 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "description": "###  Introduction\n\nThis guide is meant to be used by developers working for restaurants.\n\nThis API allows your customers (the restaurants) to get availabilities and manage reservations.\n\n### How to authenticate calls from the Restaurant to TheFork\n\nWe use <a href='https://auth0.com/docs/get-started/authentication-and-authorization-flow/client-credentials-flow'>**Auth0's** Client Credentials Flow</a> to grant access to our API.\n\nIn order to access the `B2B API`, we will send you through a safe channel an **client_id** and **client_secret**.\n\nYou can use them to generate a **token**, by doing the following call:\n\n```bash\ncurl -X POST \\\n https://auth.thefork.io/oauth/token \\\n    -d 'audience=https://api.thefork.io&grant_type=client_credentials&client_id=YOUR_CLIENT_ID&client_secret=YOUR_CLIENT_SECRET'\n```\n\nThe response will contain an `access_token`, needed for the calls to the API.\n\nThis token **expires** in 30 minutes. When it does, repeat this process to get a new token.\n\nIn order to use the API, please insert your `access_token` into the **headers** of your request as follows:\n\n```\ncurl https://api.thefork.io/manager/{version}/{path} \\\n    -H 'Authorization: Bearer <access_token>'\n```\n\n\n### Versioning\n\nWe use one version for the whole API, not one version per endpoint. Any breaking change to the contract of one or more endpoints will introduce a new version for our API.\n\nWe will stop supporting the previous version after 6 months.\n\n### Rate limiting\n\nCurrently rate limiting is enforced on default level, as specified in your contract. Please contact us to discuss your requirements if this needs revision.\n\n### <a name=\"errors\"></a>Errors\n\nTheFork uses conventional HTTP response codes for the success and failure of API requests.\n\nCertain **errors** can happen on **every** **endpoint** and should be caught globally, such as:\n\n- **429 (Rate limit)**\n- **401 (Invalid Bearer token)**\n\n```\n\n{\n\"statusCode\": 401,\n\"error\": \"Unauthorized\"\n}\n\n```\n\n- **500 - Internal server error**\n  General error, something went wrong\n\n```\n\n{\n\"statusCode\": 500,\n\"error\": \"Internal server error\"\n}\n\n```\n",
+    "version": "1.0.0",
+    "title": "TFM B2B API v1"
+  },
+  "servers": [
+    {
+      "url": "https://api.thefork.io/manager",
+      "description": "Prod API"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": [
+        
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "availabilities",
+      "description": "Availabilities fetch"
+    },
+    {
+      "name": "reservations",
+      "description": "Reservation management"
+    }
+  ],
+  "paths": {
+    "/v1/restaurants/{id}/partySizes": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "example": [
+                    1,
+                    2,
+                    3,
+                    9,
+                    10
+                  ],
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/RestaurantNotFoundError"
+          }
+        },
+        "tags": [
+          "availabilities"
+        ],
+        "summary": "Get partySizes",
+        "description": "Get list of party sizes for which there is availability on a given restaurant and date range.",
+        "operationId": "getPartySizes"
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "restaurant uuid that needs to be considered for filter",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "startDate",
+          "in": "query",
+          "description": "start date that needs to be considered for filter",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "description": "end date that needs to be considered for filter",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "offerUuid",
+          "in": "query",
+          "description": "offer uuid that may be considered for filter",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "/v1/restaurants/{id}/availabilities": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Availability"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/RestaurantNotFoundError"
+          }
+        },
+        "tags": [
+          "availabilities"
+        ],
+        "summary": "Get availabilities",
+        "description": "Get list of availabilities for a given restaurant and date range",
+        "operationId": "getAvailabilities"
+      },
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "restaurant uuid that needs to be considered for filter",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "startDate",
+          "in": "query",
+          "description": "start date that needs to be considered for filter",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "description": "end date that needs to be considered for filter",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "offerUuid",
+          "in": "query",
+          "description": "offer uuid that may be considered for filter",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "partySize",
+          "in": "query",
+          "description": "party size that may be considered for filter",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "/v1/restaurants/{id}/timeslots": {
+      "get": {
+        "tags": [
+          "availabilities"
+        ],
+        "summary": "Get time slots",
+        "description": "Get list of time slots for a given restaurant and date",
+        "operationId": "getTimeslots",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "restaurant uuid that needs to be considered for filter",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "date that needs to be considered for filter",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offerUuid",
+            "in": "query",
+            "description": "offer uuid that may be considered for filter",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partySize",
+            "in": "query",
+            "description": "party size that may be considered for filter",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Timeslot"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/RestaurantNotFoundError"
+          }
+        }
+      }
+    },
+    "/v1/restaurants/{id}/reservations": {
+      "post": {
+        "tags": [
+          "reservations"
+        ],
+        "summary": "Create a reservation",
+        "description": "Create a reservation for a given restaurant, meal date and party size",
+        "operationId": "createReservation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/CreateUpdateReservationRequestBody"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ReservationWithCustomer"
+          },
+          "400": {
+            "$ref": "#/components/responses/CreateReservation400Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/RestaurantNotFoundError"
+          },
+          "409": {
+            "description": "Possible error codes: DOUBLE_BOOKING",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralError"
+                },
+                "example": {
+                  "statusCode": 409,
+                  "error": "Conflict",
+                  "data": {
+                    "code": "DOUBLE_BOOKING"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reservations/{id}": {
+      "patch": {
+        "tags": [
+          "reservations"
+        ],
+        "summary": "Update a reservation",
+        "description": "Update a reservation meal date, party size, offer uuid and customer note",
+        "operationId": "updateReservation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/CreateUpdateReservationRequestBody"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ReservationWithCustomer"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidUserEmailError"
+          },
+          "404": {
+            "$ref": "#/components/responses/ReservationNotFoundError"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "reservations"
+        ],
+        "summary": "Get a reservation",
+        "description": "Get the reservation details for a given reservation id",
+        "operationId": "getReservation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ReservationWithCustomerUuid"
+          },
+          "404": {
+            "$ref": "#/components/responses/ReservationNotFoundError"
+          }
+        }
+      }
+    },
+    "/v1/reservations/{id}/cancel": {
+      "patch": {
+        "tags": [
+          "reservations"
+        ],
+        "summary": "Cancel a reservation",
+        "description": "Cancel a reservation",
+        "operationId": "cancelReservation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ReservationWithCustomer"
+          },
+          "400": {
+            "$ref": "#/components/responses/CancellationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/ReservationNotFoundError"
+          }
+        }
+      }
+    },
+    "/v1/restaurants/{id}/offers": {
+      "get": {
+        "tags": [
+          "offers"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Menu"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/RestaurantNotFoundError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "restaurant uuid that needs to be considered for filter",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "description": "locale that needs to be considered for filter",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "fr_FR"
+          }
+        ]
+      }
+    },
+    "/v1/customers/{id}": {
+      "get": {
+        "tags": [
+          "customers"
+        ],
+        "summary": "Get a customer",
+        "description": "Get the customer details for a given customer id",
+        "operationId": "getCustomer",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Customer"
+          },
+          "404": {
+            "$ref": "#/components/responses/CustomerNotFoundError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "responses": {
+      "Reservation": {
+        "description": "Succesful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Reservation"
+            }
+          }
+        }
+      },
+      "Customer": {
+        "description": "Succesful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Customer"
+            }
+          }
+        }
+      },
+      "ReservationWithCustomerUuid": {
+        "description": "Succesful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ReservationWithCustomerUuid"
+            }
+          }
+        }
+      },
+      "ReservationWithCustomer": {
+        "description": "Succesful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ReservationWithCustomer"
+            }
+          }
+        }
+      },
+      "CancellationError": {
+        "description": "Possible error codes: CANCELLATION_ERROR",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CancellationError"
+            }
+          }
+        }
+      },
+      "InvalidOfferError": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GeneralError"
+          }
+        ],
+        "description": "Possible error codes: INVALID_OFFER",
+        "example": {
+          "statusCode": 400,
+          "error": "Bad Request",
+          "data": {
+            "code": "INVALID_OFFER"
+          }
+        }
+      },
+      "ReservationNotFoundError": {
+        "description": "Possible error codes: RESERVATION_NOT_FOUND",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ReservationNotFoundError"
+            }
+          }
+        }
+      },
+      "CustomerNotFoundError": {
+        "description": "Possible error codes: CUSTOMER_NOT_FOUND",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CustomerNotFoundError"
+            }
+          }
+        }
+      },
+      "RestaurantNotFoundError": {
+        "description": "Possible error codes: RESTAURANT_NOT_FOUND",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RestaurantNotFoundError"
+            }
+          }
+        }
+      },
+      "InvalidUserEmailError": {
+        "description": "Possible error codes: INVALID_CUSTOMER_EMAIL",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/InvalidUserEmailError"
+            }
+          }
+        }
+      },
+      "CreateReservation400Error": {
+        "description": "Possible error codes: NO_AVAILABILITY, INVALID_CUSTOMER_EMAIL",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateReservation400Error"
+            }
+          }
+        }
+      }
+    },
+    "requestBodies": {
+      "CreateUpdateReservationRequestBody": {
+        "required": true,
+        "description": "A JSON object containing reservation information",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateUpdateReservationRequestBody"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "CreateUpdateReservationRequestBody": {
+        "type": "object",
+        "required": [
+          "mealDate",
+          "partySize",
+          "customer"
+        ],
+        "properties": {
+          "mealDate": {
+            "type": "string",
+            "format": "datetime",
+            "example": "2021-02-02T20:00:00.000Z",
+            "description": "Dates are always UTC"
+          },
+          "partySize": {
+            "type": "integer",
+            "example": 2
+          },
+          "offerUuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customerNote": {
+            "type": "string",
+            "example": "note by the customer"
+          },
+          "customer": {
+            "type": "object",
+            "required": [
+              "email",
+              "firstName",
+              "lastName",
+              "locale"
+            ],
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "email@domain.com"
+              },
+              "firstName": {
+                "type": "string",
+                "example": "John"
+              },
+              "lastName": {
+                "type": "string",
+                "example": "Doe"
+              },
+              "phone": {
+                "type": "string",
+                "example": "+336660000000"
+              },
+              "locale": {
+                "type": "string",
+                "example": "fr_FR"
+              },
+              "civility": {
+                "type": "string",
+                "enum": [
+                  "mr",
+                  "mrs",
+                  "ms",
+                  "mr_and_mrs",
+                  "mx",
+                  "doctor",
+                  "professor",
+                  "counsel",
+                  "ambassador",
+                  "madam_ambassador",
+                  "president",
+                  "madam_president",
+                  "magister",
+                  "chef",
+                  "lord",
+                  "prince",
+                  "princess",
+                  "count",
+                  "countess",
+                  "duke",
+                  "duchess",
+                  "sir",
+                  "lady",
+                  "highness",
+                  "baron",
+                  "baroness",
+                  "company"
+                ],
+                "example": "mr"
+              },
+              "optins": {
+                "type": "object",
+                "properties": {
+                  "restaurantNewsletter": {
+                    "type": "boolean",
+                    "example": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "GeneralError": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number"
+          },
+          "error": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "CancellationError": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GeneralError"
+          }
+        ],
+        "description": "Possible error codes: CANCELLATION_ERROR",
+        "example": {
+          "statusCode": 400,
+          "error": "Bad Request",
+          "data": {
+            "code": "CANCELLATION_ERROR"
+          }
+        }
+      },
+      "ReservationNotFoundError": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GeneralError"
+          }
+        ],
+        "description": "Possible error codes: RESERVATION_NOT_FOUND",
+        "example": {
+          "statusCode": 404,
+          "error": "Not Found",
+          "data": {
+            "code": "RESERVATION_NOT_FOUND"
+          }
+        }
+      },
+      "CustomerNotFoundError": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GeneralError"
+          }
+        ],
+        "description": "Possible error codes: CUSTOMER_NOT_FOUND",
+        "example": {
+          "statusCode": 404,
+          "error": "Not Found",
+          "data": {
+            "code": "CUSTOMER_NOT_FOUND"
+          }
+        }
+      },
+      "RestaurantNotFoundError": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GeneralError"
+          }
+        ],
+        "description": "Possible error codes: RESTAURANT_NOT_FOUND",
+        "example": {
+          "statusCode": 404,
+          "error": "Not Found",
+          "data": {
+            "code": "RESTAURANT_NOT_FOUND"
+          }
+        }
+      },
+      "InvalidUserEmailError": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GeneralError"
+          }
+        ],
+        "description": "Possible error codes: INVALID_CUSTOMER_EMAIL",
+        "example": {
+          "statusCode": 400,
+          "error": "Bad Request",
+          "data": {
+            "code": "INVALID_CUSTOMER_EMAIL"
+          }
+        }
+      },
+      "CreateReservation400Error": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GeneralError"
+          }
+        ],
+        "description": "Possible error codes: NO_AVAILABILITY, INVALID_CUSTOMER_EMAIL",
+        "example": {
+          "statusCode": 400,
+          "error": "Bad Request",
+          "data": {
+            "code": "NO_AVAILABILITY"
+          }
+        }
+      },
+      "Availability": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "offerList": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "Menu": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Tasting Menu"
+          },
+          "description": {
+            "type": "string",
+            "example": "You will have a wonderful time trying all the local dishes of our region"
+          },
+          "price": {
+            "type": "number",
+            "example": 50
+          }
+        }
+      },
+      "Timeslot": {
+        "type": "object",
+        "properties": {
+          "datetime": {
+            "type": "string",
+            "format": "datetime",
+            "example": "2022-12-12T20:00:00.000Z",
+            "description": "Dates are always UTC"
+          },
+          "offers": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "Reservation": {
+        "type": "object",
+        "properties": {
+          "reservationUuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "restaurantUuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mealDate": {
+            "type": "string",
+            "format": "datetime",
+            "example": "2021-02-02T20:00:00.000Z",
+            "description": "Dates are always UTC"
+          },
+          "partySize": {
+            "type": "integer",
+            "example": 2
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "REQUESTED",
+              "CANCELED",
+              "RECORDED"
+            ],
+            "example": "RECORDED"
+          },
+          "offerUuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customerNote": {
+            "type": "string",
+            "example": "note by the customer"
+          }
+        }
+      },
+      "ReservationWithCustomerUuid": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Reservation"
+          }
+        ],
+        "properties": {
+          "customerUuid": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ReservationWithCustomer": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Reservation"
+          }
+        ],
+        "properties": {
+          "customer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Customer"
+              }
+            ]
+          }
+        }
+      },
+      "CanceledReservation": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ReservationWithCustomer"
+          }
+        ],
+        "properties": {
+          "status": {
+            "example": "CANCELED"
+          }
+        }
+      },
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "customerUuid": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "email@domain.com"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "John"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Doe"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+336660000000"
+          },
+          "locale": {
+            "type": "string",
+            "example": "fr_FR"
+          },
+          "civility": {
+            "type": "string",
+            "enum": [
+              "mr",
+              "mrs",
+              "ms",
+              "mr_and_mrs",
+              "mx",
+              "doctor",
+              "professor",
+              "counsel",
+              "ambassador",
+              "madam_ambassador",
+              "president",
+              "madam_president",
+              "magister",
+              "chef",
+              "lord",
+              "prince",
+              "princess",
+              "count",
+              "countess",
+              "duke",
+              "duchess",
+              "sir",
+              "lady",
+              "highness",
+              "baron",
+              "baroness",
+              "company"
+            ],
+            "example": "mr"
+          },
+          "optins": {
+            "type": "object",
+            "properties": {
+              "restaurantNewsletter": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
